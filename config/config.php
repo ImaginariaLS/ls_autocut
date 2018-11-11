@@ -4,7 +4,7 @@
  * e-mail: Vladimir.Linkevich@gmail.com
  * since 2011-02-25
  ********************************************/
-$config = array();
+$config = [];
 
 /*
  * will set cut after XXX characters
@@ -18,21 +18,21 @@ $config['length_before_cut'] = 500;
  *
  * Не разрешает вставлять CUT внутри этих тегов:
  */
-$config['TagUnbreakable'] = array('video', 'code', 'a', 'blockquote', 'ul', 'ol', 'h6', 'cut');
+$config['unbreakable_tags'] = array('video', 'code', 'a', 'blockquote', 'ul', 'ol', 'h4', 'h5', 'h6', 'cut');
 
 /*
  * Do you want to cut topics in personal blogs as well?
  *
  * В персональных блогах топики резать будем?
  */
-$config['cutPersonal'] = true;
+$config['cut_personal_topics'] = true;
 
 /*
  * Should we cut text for topics by admin?
  *
  * Топики администратора тоже урезать?
  */
-$config['cutAdmin'] = false;
+$config['cut_admin_topics'] = true;
 
 /*
  * If LightModeOn is set "true" then IF user had put the <cut> into text autocutting check SecondBarrier.
@@ -50,6 +50,22 @@ $config['LightModeOn'] = false;
  * или установите второе разумное ограничение;
  */
 $config['SecondBarrier'] = 800;
+
+/**
+ * KW:
+ *
+ * Минимальная длина "остатка" поста (в процентах от полной длины текста), при котором применяется тег 'cut'.
+ * Если длина обрезаемого текста меньше этой (общая длина текста) * (это значение) - обрезки текста не происходит.
+ *
+ */
+$config['length_of_uncuttable_text_relative'] = 5;
+
+/*
+ * KW:
+ *
+ * минимальная длина "остатка" поста в символах (utf8) при которой не происходит применения обрезки текста
+ */
+$config['length_of_uncuttable_text_absolute'] = 40;
 
 return $config;
 

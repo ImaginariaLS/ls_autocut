@@ -34,13 +34,13 @@ class PluginAutocut_HookAutocut extends Hook
 
         //#Disables AutoCut for Admin
         $oUser = $this->User_GetUserCurrent();
-        if ($oUser->isAdministrator() && !Config::Get('plugin.autocut.cutAdmin')) {
+        if ($oUser->isAdministrator() && !Config::Get('plugin.autocut.cut_admin_topics')) {
             return $var;
         }
         $oTopic = $var['oTopic'];
 
         // #check if we are posting to personal blog and if we need to cut personal topics
-        if (getRequest('blog_id') == 0 && !Config::Get('plugin.autocut.cutPersonal')) {
+        if (getRequest('blog_id') == 0 && !Config::Get('plugin.autocut.cut_personal_topics')) {
             return $var;
         }
 

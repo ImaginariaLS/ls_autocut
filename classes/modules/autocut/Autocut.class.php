@@ -9,17 +9,41 @@
 
 class PluginAutocut_ModuleAutocut extends Module
 {
-    protected $aTagUnbreakable;
-    protected $iLengthMax;
-    protected $bLightMode;
+    /**
+     * @var array Массив тегов, внутри которых не должен происходить разрыв
+     */
+    protected $unbreakable_tags_list;
+
+    /**
+     * Length before cut
+     * @var
+     */
+    protected $max_text_length_before_cut;
+
+
+    /**
+     * Настройки, задающие длину необрезанного текста
+     */
+    protected $uncuttable_text_length_absolute;
+    protected $uncuttable_text_length_relative;
+
+    /**
+     * Две "непрозрачных" настройки, задающих "второй барьер"
+     * @var
+     */
     protected $iLengthLast;
+    protected $bLightMode;
 
     public function Init()
     {
-        $this->aTagUnbreakable = Config::Get('plugin.autocut.TagUnbreakable');
-        $this->iLengthMax = Config::Get('plugin.autocut.length_before_cut');
+        $this->unbreakable_tags_list = Config::Get('plugin.autocut.unbreakable_tags');
+        $this->max_text_length_before_cut = Config::Get('plugin.autocut.length_before_cut');
+
         $this->bLightMode = Config::Get('plugin.autocut.LightModeOn');
         $this->iLengthLast = Config::Get('plugin.autocut.SecondBarrier');
+
+        $this->uncuttable_text_length_absolute = Config::Get('plugin.autocut.length_of_uncuttable_text_absolute');
+        $this->uncuttable_text_length_relative = Config::Get('plugin.autocut.length_of_uncuttable_text_relative');
     }
 
     /**
@@ -30,8 +54,8 @@ class PluginAutocut_ModuleAutocut extends Module
      */
     public function CutAdd($str)
     {
-        $iLengthMax = $this->iLengthMax;
-        $aTagUnbreakable = $this->aTagUnbreakable;
+        $iLengthMax = $this->max_text_length_before_cut;
+        $aTagUnbreakable = $this->unbreakable_tags_list;
         $iLengthLast = $this->iLengthLast;
         $iTextLength = mb_strlen($str, 'UTF-8');
         $cutpos = null;
@@ -154,6 +178,19 @@ class PluginAutocut_ModuleAutocut extends Module
                 //#char position enumerator
                 $i++;
             }
+
+            $left_text_length = $iTextLength - $cutpos;
+
+            // Если длина остатка текста меньше необрезаемой длины - возвращаем неурезанный текст
+            if ($left_text_length <= $this->uncuttable_text_length_absolute) {
+                return $str;
+            }
+
+            // Если необрезаемый остаток текста составляет долю, меньшую порогового значения в % - возвращаем неурезанный текст
+            if ($left_text_length <= ($iTextLength * $this->uncuttable_text_length_relative / 100)) {
+                return $str;
+            }
+
             //#insert a cut tag;
             $str = mb_substr($str, 0, $cutpos, 'UTF-8') . '<cut>' . mb_substr($str, $cutpos, $iTextLength, 'UTF-8');
         }
