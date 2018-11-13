@@ -10,19 +10,29 @@
 
 class PluginAutocut_HookAutocut extends Hook
 {
+    const ConfigKey = 'autocut';
+    const HooksArray = [
+        'topic_edit_before' =>  'CheckTopicFieldsCut',
+        'topic_add_before'  =>  'CheckTopicFieldsCut'
+        /*
+        'check_photoset_fields' =>  'CheckTopicFieldsCut'
+         */
+    ];
+
     /**
      *
      */
     public function RegisterHook()
     {
-        /*
-         * ActionTopic Hook
-         * CheckTopicFields function hook.
-         */
-        $this->AddHook('topic_edit_before', 'CheckTopicFieldsCut');
-        $this->AddHook('topic_add_before', 'CheckTopicFieldsCut');
-
-        //#$this -> AddHook('check_photoset_fields', 'CheckTopicFieldsCut');
+        $plugin_config_key = $this::ConfigKey;
+        foreach ($this::HooksArray as $hook => $callback) {
+            $this->AddHook(
+                $hook,
+                $callback,
+                __CLASS__,
+                Config::Get("plugin.{$plugin_config_key}.hook_priority.{$hook}") ?? 1
+            );
+        }
     }
 
     /**
@@ -32,14 +42,14 @@ class PluginAutocut_HookAutocut extends Hook
     public function CheckTopicFieldsCut($var)
     {
 
-        //#Disables AutoCut for Admin
+        //Disables AutoCut for Admin
         $oUser = $this->User_GetUserCurrent();
         if ($oUser->isAdministrator() && !Config::Get('plugin.autocut.cut_admin_topics')) {
             return $var;
         }
         $oTopic = $var['oTopic'];
 
-        // #check if we are posting to personal blog and if we need to cut personal topics
+        // check if we are posting to personal blog and if we need to cut personal topics
         if (getRequest('blog_id') == 0 && !Config::Get('plugin.autocut.cut_personal_topics')) {
             return $var;
         }
