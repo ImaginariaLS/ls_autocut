@@ -31,16 +31,16 @@ class PluginAutocut_ModuleAutocut extends Module
      * Две "непрозрачных" настройки, задающих "второй барьер"
      * @var
      */
-    protected $iLengthLast;
-    protected $bLightMode;
+    protected $cut_second_barrier_charcount;
+    protected $cut_second_barrier_enabled;
 
     public function Init()
     {
         $this->unbreakable_tags_list = Config::Get('plugin.autocut.unbreakable_tags');
         $this->max_text_length_before_cut = Config::Get('plugin.autocut.length_before_cut');
 
-        $this->bLightMode = Config::Get('plugin.autocut.LightModeOn');
-        $this->iLengthLast = Config::Get('plugin.autocut.SecondBarrier');
+        $this->cut_second_barrier_enabled = Config::Get('plugin.autocut.LightModeOn');
+        $this->cut_second_barrier_charcount = Config::Get('plugin.autocut.SecondBarrier');
 
         $this->uncuttable_text_length_absolute = Config::Get('plugin.autocut.length_of_uncuttable_text_absolute');
         $this->uncuttable_text_length_relative = Config::Get('plugin.autocut.length_of_uncuttable_text_relative');
@@ -54,10 +54,10 @@ class PluginAutocut_ModuleAutocut extends Module
      */
     public function CutAdd($str)
     {
-        $iLengthMax = $this->max_text_length_before_cut;
-        $aTagUnbreakable = $this->unbreakable_tags_list;
-        $iLengthLast = $this->iLengthLast;
-        $iTextLength = mb_strlen($str, 'UTF-8');
+        $max_text_length_before_cut = $this->max_text_length_before_cut;
+        $unbreakable_tags_list = $this->unbreakable_tags_list;
+        $cut_second_barrier_charcount = $this->cut_second_barrier_charcount;
+        $input_text_length = mb_strlen($str, 'UTF-8');
         $cutpos = null;
 
         // exclude video link from counting position
@@ -66,22 +66,22 @@ class PluginAutocut_ModuleAutocut extends Module
         $sStripped = preg_replace('/<[^>]*>/', '', $sPrestripped);
 
         // check stripped text length;
-        if (strlen($sStripped) <= $iLengthMax) {
+        if (strlen($sStripped) <= $max_text_length_before_cut) {
             return $str;
         }
 
         // get current CUT position if exists
         $cutpos = mb_strpos(preg_replace('/<(?!cut)[^>]*>/', '', $sPrestripped), '<cut>', 0, "UTF-8");
 
-        if ($cutpos !== false && $this->bLightMode) {
-            if ($cutpos <= $iLengthLast || $iLengthLast == 0) {
+        if ($cutpos !== false && $this->cut_second_barrier_enabled) {
+            if ($cutpos <= $cut_second_barrier_charcount || $cut_second_barrier_charcount == 0) {
                 return $str;
             } else {
-                $iLengthMax = $iLengthLast;
+                $max_text_length_before_cut = $cut_second_barrier_charcount;
             }
         }
 
-        if ($cutpos !== false && $cutpos <= $iLengthMax) {
+        if ($cutpos !== false && $cutpos <= $max_text_length_before_cut) {
             return $str;
         } else {
 
@@ -102,7 +102,7 @@ class PluginAutocut_ModuleAutocut extends Module
             $sWaitTag = '';
 
             //moving through text
-            while ($countchar <= $iLengthMax && $i < $iTextLength) {
+            while ($countchar <= $max_text_length_before_cut && $i < $input_text_length) {
                 $current = mb_substr($str, $i, 1, 'UTF-8');
 
                 //#Find where the tag begins and start recording it
@@ -134,7 +134,7 @@ class PluginAutocut_ModuleAutocut extends Module
                     } else {
                         $countchar++;
                     }
-                    if (in_array($sCurrentTag, $aTagUnbreakable)) {
+                    if (in_array($sCurrentTag, $unbreakable_tags_list)) {
                         $sWaitTag = $sWaitTag == '' ? $sCurrentTag : '';
                     }
                     if ($sWaitTag != 'video') {
@@ -179,7 +179,7 @@ class PluginAutocut_ModuleAutocut extends Module
                 $i++;
             }
 
-            $left_text_length = $iTextLength - $cutpos;
+            $left_text_length = $input_text_length - $cutpos;
 
             // Если длина остатка текста меньше необрезаемой длины - возвращаем неурезанный текст
             if ($left_text_length <= $this->uncuttable_text_length_absolute) {
@@ -187,12 +187,12 @@ class PluginAutocut_ModuleAutocut extends Module
             }
 
             // Если необрезаемый остаток текста составляет долю, меньшую порогового значения в % - возвращаем неурезанный текст
-            if ($left_text_length <= ($iTextLength * $this->uncuttable_text_length_relative / 100)) {
+            if ($left_text_length <= ($input_text_length * $this->uncuttable_text_length_relative / 100)) {
                 return $str;
             }
 
             //#insert a cut tag;
-            $str = mb_substr($str, 0, $cutpos, 'UTF-8') . '<cut>' . mb_substr($str, $cutpos, $iTextLength, 'UTF-8');
+            $str = mb_substr($str, 0, $cutpos, 'UTF-8') . '<cut>' . mb_substr($str, $cutpos, $input_text_length, 'UTF-8');
         }
         return $str;
         //#END OF CUT ADD FUNCTION
